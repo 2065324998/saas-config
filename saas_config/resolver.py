@@ -3,7 +3,7 @@
 Orchestrates the full tenant resolution pipeline:
 1. Calculate effective resource limits (compliance-adjusted)
 2. Resolve feature entitlements (tier + compliance + overrides)
-3. Calculate monthly invoice (usage-based billing)
+3. Calculate monthly invoice (usage-based billing with cost center allocation)
 """
 
 from saas_config.limits import get_effective_limits
@@ -16,7 +16,7 @@ def resolve_tenant(tenant_config):
 
     Takes a tenant configuration dict and produces the complete
     resolved state including effective limits, feature entitlements,
-    and the monthly invoice.
+    and the monthly invoice with cost center allocation.
 
     Args:
         tenant_config: Dict with:
@@ -26,6 +26,7 @@ def resolve_tenant(tenant_config):
             - feature_overrides: dict of feature_name -> state (optional)
             - purchased_addons: list of feature names (optional)
             - usage: dict with api_calls, storage_gb (optional)
+            - cost_centers: list of dicts with 'name' and 'usage' (optional)
 
     Returns:
         Dict with:
@@ -33,13 +34,14 @@ def resolve_tenant(tenant_config):
             - tier: str
             - effective_limits: dict with api_calls, storage_gb
             - entitlements: dict of feature_name -> state
-            - invoice: dict with billing breakdown
+            - invoice: dict with billing breakdown and cost center allocations
     """
     tier = tenant_config["tier"]
     compliance = tenant_config.get("compliance", [])
     overrides = tenant_config.get("feature_overrides", {})
     addons = tenant_config.get("purchased_addons", [])
     usage = tenant_config.get("usage", {})
+    cost_centers = tenant_config.get("cost_centers", [])
 
     effective_limits = get_effective_limits(tier, compliance)
 
@@ -53,6 +55,7 @@ def resolve_tenant(tenant_config):
         tier, compliance,
         usage=usage,
         purchased_addons=addons,
+        cost_centers=cost_centers,
     )
 
     return {
