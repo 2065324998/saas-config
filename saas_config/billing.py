@@ -4,27 +4,16 @@ Computes the monthly bill based on:
 1. Base subscription fee (from tier)
 2. API call overage charges (tiered pricing)
 3. Add-on feature fees ($10/month per add-on)
-4. Compliance surcharge (compounding on running total)
+4. Compliance surcharge (applied to full subtotal)
 5. Cost center allocation (proportional overage distribution)
 
 Overage is calculated against the compliance-adjusted resource limits,
-not the base tier limits.
+not the base tier limits. The surcharge is calculated on the full
+subtotal (base + overage + add-ons), not just the base subscription fee.
 
-The compliance surcharge is calculated on the full subtotal (base +
-overage + add-ons). When multiple compliance profiles are active,
-surcharges compound: each profile's surcharge is computed on a running
-total that starts at the subtotal and grows as each surcharge is added.
-Profiles are processed in alphabetical order by name, and each
-individual surcharge is rounded to 2 decimal places before being added
-to the running total.
-
-When cost centers are provided, overage charges are allocated
-proportionally across cost centers based on each center's usage weight.
-Allocations must be penny-precise — every cent of the overage charge
-is accounted for, with no rounding discrepancy. Each center's initial
-share is floored to the nearest cent, and remaining cents are distributed
-to the centers with the largest fractional remainders from the flooring
-step (ties broken by input order).
+When cost centers are provided, overage charges are distributed across
+cost centers proportionally based on each center's usage weight. The sum
+of all allocations must equal the total overage charge exactly.
 """
 
 from saas_config.tiers import TIERS, OVERAGE_TIERS, ADDON_PRICE
